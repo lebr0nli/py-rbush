@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "py-rbush"
+version = "0.1.0"
+description = ""
+authors = ["Alan Li <61896187+lebr0nli@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "0.6.8"
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+    "A", # flake8-builtins
+    "E", # pycodestyle
+    "F", # pyflakes
+    "W", # pycodestyle
+    "C4", # flake8-comprehensions
+    "I", # isort
+    "SLOT", # flake8-slots
+    "FLY", # flynt
+    "PGH", # pygrep-hooks
+    "RET506", # flake8-return: superfluous-else-raise
+    "RET507", # flake8-return: superfluous-else-continue
+    "RET508", # flake8-return: superfluous-else-break
+    "UP" # pyupgrade
+]
+ignore = [
+    "E402", # Module level import not at top of file
+    "E501" # Line too long
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

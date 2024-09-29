@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+.gdb_history
+.mypy_cache
+.ruff_cache
