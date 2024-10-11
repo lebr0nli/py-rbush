@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "py-rbush"
+name = "rbush"
 version = "0.1.0"
 description = ""
 authors = ["Alan Li <61896187+lebr0nli@users.noreply.github.com>"]
@@ -7,6 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
+pybind11 = "2.13.6"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.6.8"
@@ -39,6 +40,10 @@ ignore = [
 [tool.ruff.lint.isort]
 force-single-line = true
 
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = true
+
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core", "setuptools", "pybind11"]
 build-backend = "poetry.core.masonry.api"
