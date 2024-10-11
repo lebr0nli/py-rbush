@@ -11,6 +11,7 @@ pybind11 = "2.13.6"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.6.8"
+pytest = "8.3.3"
 
 [tool.ruff]
 line-length = 100
