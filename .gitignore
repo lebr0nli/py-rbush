@@ -1,4 +1,7 @@
 __pycache__/
+*.so
+build/
+dist/
 *.py[cod]
 .venv/
 .DS_Store
