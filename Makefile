@@ -27,4 +27,11 @@ fix-python:
 fix-cpp:
 	$(CLANG_FORMAT) -i $(CPP_SRC_FILES)
 
-.PHONY: install_deps lint lint-python lint-cpp fix fix-python fix-cpp
+test:
+	$(POETRY) install
+	$(POETRY) run pytest -vvv
+
+clean:
+	rm -rf __pycache__ build dist *.so
+
+.PHONY: install_deps lint lint-python lint-cpp fix fix-python fix-cpp test clean
