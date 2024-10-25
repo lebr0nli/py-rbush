@@ -232,6 +232,35 @@ double RBushBase<T>::_all_dist_margin(Node<T> &node, int m, int M, bool compare_
     return margin_sum;
 }
 
+template <typename T> std::vector<T> RBushBase<T>::all() const {
+    std::vector<T> result;
+    _all(_root.get(), result);
+    return result;
+}
+
+template <typename T> void RBushBase<T>::_all(const Node<T> *node, std::vector<T> &result) const {
+    std::vector<const Node<T> *> nodesToSearch;
+
+    while (node) {
+        if (node->is_leaf) {
+            for (const auto &child : node->children) {
+                result.push_back(*child->data);
+            }
+        } else {
+            for (const auto &child : node->children) {
+                nodesToSearch.push_back(child.get());
+            }
+        }
+
+        if (!nodesToSearch.empty()) {
+            node = nodesToSearch.back();
+            nodesToSearch.pop_back();
+        } else {
+            node = nullptr;
+        }
+    }
+}
+
 // RBush implementation
 
 BBox RBush::to_bbox(const py::dict &item) const {

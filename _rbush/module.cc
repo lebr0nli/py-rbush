@@ -25,11 +25,13 @@ PYBIND11_MODULE(_rbush, m) {
         .def(py::init<int>(), py::arg("max_entries") = 9)
         .def("clear", &rbush::RBushBase<py::object>::clear)
         .def("insert", &rbush::RBushBase<py::object>::insert, py::arg("item"))
+        .def("all", &rbush::RBushBase<py::object>::all)
         .def("to_bbox", &rbush::RBushBase<py::object>::to_bbox, py::arg("item"));
 
     py::class_<rbush::RBush>(m, "RBush")
         .def(py::init<int>(), py::arg("max_entries") = 9)
         .def("clear", &rbush::RBushBase<py::dict>::clear)
         .def("insert", &rbush::RBushBase<py::dict>::insert, py::arg("item"))
+        .def("all", &rbush::RBushBase<py::dict>::all)
         .def("to_bbox", &rbush::RBush::to_bbox, py::arg("item"));
 }
