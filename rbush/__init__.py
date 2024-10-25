@@ -1,6 +1,5 @@
-import _rbush
+from _rbush import BBox
+from _rbush import RBush
+from _rbush import RBushBase
 
-
-class RBush:
-    def __init__(self):
-        self._rbush = _rbush.RBush()
+__all__ = ["RBush", "RBushBase", "BBox"]
