@@ -240,33 +240,24 @@ double RBushBase<T>::_all_dist_margin(Node<T> &node, int m, int M, bool compare_
     return margin_sum;
 }
 
-template <typename T> std::vector<T> RBushBase<T>::all() const {
-    std::vector<T> result;
-    _all(_root.get(), result);
-    return result;
-}
-
-template <typename T> void RBushBase<T>::_all(const Node<T> *node, std::vector<T> &result) const {
-    std::vector<const Node<T> *> nodesToSearch;
-
-    while (node) {
-        if (node->is_leaf) {
-            for (const auto &child : node->children) {
+template <typename T> std::vector<std::reference_wrapper<T>> RBushBase<T>::all() const {
+    std::vector<std::reference_wrapper<T>> result;
+    std::vector<std::reference_wrapper<const Node<T>>> nodes_to_search;
+    nodes_to_search.push_back(std::cref(*_root));
+    while (!nodes_to_search.empty()) {
+        const Node<T> &node = nodes_to_search.back().get();
+        nodes_to_search.pop_back();
+        if (node.is_leaf) {
+            for (const auto &child : node.children) {
                 result.push_back(*child->data);
             }
         } else {
-            for (const auto &child : node->children) {
-                nodesToSearch.push_back(child.get());
+            for (const auto &child : node.children) {
+                nodes_to_search.push_back(std::cref(*child));
             }
         }
-
-        if (!nodesToSearch.empty()) {
-            node = nodesToSearch.back();
-            nodesToSearch.pop_back();
-        } else {
-            node = nullptr;
-        }
     }
+    return result;
 }
 
 // RBush implementation

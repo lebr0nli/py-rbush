@@ -65,7 +65,7 @@ public:
 
     void clear();
     void insert(const T &item);
-    std::vector<T> all() const;
+    std::vector<std::reference_wrapper<T>> all() const;
 
     virtual BBox to_bbox(const T &item) const = 0;
 
@@ -84,7 +84,6 @@ private:
     int _choose_split_index(Node<T> &node, int m, int M);
     void _choose_split_axis(Node<T> &node, int m, int M);
     double _all_dist_margin(Node<T> &node, int m, int M, bool compare_min_x);
-    void _all(const Node<T> *node, std::vector<T> &result) const;
 };
 
 // Default implementation that takes a Python dictionary as input
