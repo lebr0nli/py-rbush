@@ -172,12 +172,13 @@ void RBushBase<T>::_adjust_parent_bboxes(const BBox &bbox,
 }
 
 template <typename T> void RBushBase<T>::_split_root(Node<T> &node, Node<T> &new_node) {
-    _root = std::make_unique<Node<T>>();
-    _root->height = node.height + 1;
-    _root->is_leaf = false;
-    _root->children.push_back(std::make_unique<Node<T>>(std::move(node)));
-    _root->children.push_back(std::make_unique<Node<T>>(std::move(new_node)));
-    _root->calc_bbox();
+    std::unique_ptr<Node<T>> new_root = std::make_unique<Node<T>>();
+    new_root->height = node.height + 1;
+    new_root->is_leaf = false;
+    new_root->children.push_back(std::make_unique<Node<T>>(std::move(node)));
+    new_root->children.push_back(std::make_unique<Node<T>>(std::move(new_node)));
+    new_root->calc_bbox();
+    _root = std::move(new_root);
 }
 
 template <typename T> int RBushBase<T>::_choose_split_index(Node<T> &node, int m, int M) {
