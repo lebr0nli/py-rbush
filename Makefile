@@ -5,6 +5,7 @@ CLANG_FORMAT=clang-format
 
 CPP_SRC_DIR=_rbush
 CPP_SRC_FILES=$(shell find $(CPP_SRC_DIR) -name '*.cpp' -o -name '*.h' -o -name '*.cc')
+BENCHMARK_SCRIPT=benchmarks/performance.py
 
 install_deps:
 	$(POETRY) install
@@ -31,7 +32,11 @@ test:
 	$(POETRY) install
 	$(POETRY) run pytest -vvv
 
+bench:
+	$(POETRY) install
+	$(POETRY) run python $(BENCHMARK_SCRIPT)
+
 clean:
 	rm -rf __pycache__ build dist *.so
 
-.PHONY: install_deps lint lint-python lint-cpp fix fix-python fix-cpp test clean
+.PHONY: install_deps lint lint-python lint-cpp fix fix-python fix-cpp test bench clean
