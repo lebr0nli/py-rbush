@@ -150,7 +150,9 @@ void RBushBase<T>::_split(std::vector<std::reference_wrapper<Node<T>>> &insert_p
     new_node->children.insert(new_node->children.end(),
                               std::make_move_iterator(node.children.begin() + split_index),
                               std::make_move_iterator(node.children.end()));
-    node.children.erase(node.children.begin() + split_index, node.children.end());
+    node.children.resize(split_index);
+    new_node->height = node.height;
+    new_node->is_leaf = node.is_leaf;
 
     node.calc_bbox();
     new_node->calc_bbox();
