@@ -111,29 +111,34 @@ template <typename T> void RBushBase<T>::_insert(std::unique_ptr<Node<T>> item_n
 template <typename T>
 Node<T> &RBushBase<T>::_choose_subtree(const BBox &bbox, Node<T> &node, int level,
                                        std::vector<std::reference_wrapper<Node<T>>> &path) {
-    path.push_back(std::ref(node));
+    std::reference_wrapper<Node<T>> target_node = std::ref(node);
+    while (true) {
+        path.push_back(target_node);
 
-    if (node.is_leaf || static_cast<int>(path.size()) - 1 == level) {
-        return node;
-    }
+        if (target_node.get().is_leaf || static_cast<int>(path.size()) - 1 == level)
+            break;
 
-    double min_enlargement = std::numeric_limits<double>::max();
-    double min_area = std::numeric_limits<double>::max();
-    std::reference_wrapper<Node<T>> chosen_node = *node.children[0];
+        double min_area = std::numeric_limits<double>::max();
+        double min_enlargement = std::numeric_limits<double>::max();
+        bool found = false;
 
-    for (const auto &child : node.children) {
-        double area = child->area();
-        double enlargement = child->enlarged_area(bbox) - area;
+        for (const auto &child : target_node.get().children) {
+            double area = child->area();
+            double enlargement = child->enlarged_area(bbox) - area;
 
-        if (enlargement < min_enlargement || (enlargement == min_enlargement && area < min_area)) {
-            chosen_node = *child;
+            if (enlargement < min_enlargement ||
+                (enlargement == min_enlargement && area < min_area)) {
+                target_node = *child;
+                found = true;
+            }
+
+            min_area = std::min(min_area, area);
+            min_enlargement = std::min(min_enlargement, enlargement);
         }
-
-        min_enlargement = std::min(min_enlargement, enlargement);
-        min_area = std::min(min_area, area);
+        if (!found)
+            target_node = *target_node.get().children[0];
     }
-
-    return _choose_subtree(bbox, chosen_node.get(), level, path);
+    return target_node;
 }
 
 template <typename T>
