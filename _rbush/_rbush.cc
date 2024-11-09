@@ -111,29 +111,34 @@ template <typename T> void RBushBase<T>::_insert(std::unique_ptr<Node<T>> item_n
 template <typename T>
 Node<T> &RBushBase<T>::_choose_subtree(const BBox &bbox, Node<T> &node, int level,
                                        std::vector<std::reference_wrapper<Node<T>>> &path) {
-    path.push_back(std::ref(node));
+    std::reference_wrapper<Node<T>> target_node = std::ref(node);
+    while (true) {
+        path.push_back(target_node);
 
-    if (node.is_leaf || static_cast<int>(path.size()) - 1 == level) {
-        return node;
-    }
+        if (target_node.get().is_leaf || static_cast<int>(path.size()) - 1 == level)
+            break;
 
-    double min_enlargement = std::numeric_limits<double>::max();
-    double min_area = std::numeric_limits<double>::max();
-    std::reference_wrapper<Node<T>> chosen_node = *node.children[0];
+        double min_area = std::numeric_limits<double>::max();
+        double min_enlargement = std::numeric_limits<double>::max();
+        bool found = false;
 
-    for (const auto &child : node.children) {
-        double area = child->area();
-        double enlargement = child->enlarged_area(bbox) - area;
+        for (const auto &child : target_node.get().children) {
+            double area = child->area();
+            double enlargement = child->enlarged_area(bbox) - area;
 
-        if (enlargement < min_enlargement || (enlargement == min_enlargement && area < min_area)) {
-            chosen_node = *child;
+            if (enlargement < min_enlargement ||
+                (enlargement == min_enlargement && area < min_area)) {
+                target_node = *child;
+                found = true;
+            }
+
+            min_area = std::min(min_area, area);
+            min_enlargement = std::min(min_enlargement, enlargement);
         }
-
-        min_enlargement = std::min(min_enlargement, enlargement);
-        min_area = std::min(min_area, area);
+        if (!found)
+            target_node = *target_node.get().children[0];
     }
-
-    return _choose_subtree(bbox, chosen_node.get(), level, path);
+    return target_node;
 }
 
 template <typename T>
@@ -150,7 +155,9 @@ void RBushBase<T>::_split(std::vector<std::reference_wrapper<Node<T>>> &insert_p
     new_node->children.insert(new_node->children.end(),
                               std::make_move_iterator(node.children.begin() + split_index),
                               std::make_move_iterator(node.children.end()));
-    node.children.erase(node.children.begin() + split_index, node.children.end());
+    node.children.resize(split_index);
+    new_node->height = node.height;
+    new_node->is_leaf = node.is_leaf;
 
     node.calc_bbox();
     new_node->calc_bbox();
@@ -172,12 +179,13 @@ void RBushBase<T>::_adjust_parent_bboxes(const BBox &bbox,
 }
 
 template <typename T> void RBushBase<T>::_split_root(Node<T> &node, Node<T> &new_node) {
-    _root = std::make_unique<Node<T>>();
-    _root->height = node.height + 1;
-    _root->is_leaf = false;
-    _root->children.push_back(std::make_unique<Node<T>>(std::move(node)));
-    _root->children.push_back(std::make_unique<Node<T>>(std::move(new_node)));
-    _root->calc_bbox();
+    std::unique_ptr<Node<T>> new_root = std::make_unique<Node<T>>();
+    new_root->height = node.height + 1;
+    new_root->is_leaf = false;
+    new_root->children.push_back(std::make_unique<Node<T>>(std::move(node)));
+    new_root->children.push_back(std::make_unique<Node<T>>(std::move(new_node)));
+    new_root->calc_bbox();
+    _root = std::move(new_root);
 }
 
 template <typename T> int RBushBase<T>::_choose_split_index(Node<T> &node, int m, int M) {
@@ -232,33 +240,24 @@ double RBushBase<T>::_all_dist_margin(Node<T> &node, int m, int M, bool compare_
     return margin_sum;
 }
 
-template <typename T> std::vector<T> RBushBase<T>::all() const {
-    std::vector<T> result;
-    _all(_root.get(), result);
-    return result;
-}
-
-template <typename T> void RBushBase<T>::_all(const Node<T> *node, std::vector<T> &result) const {
-    std::vector<const Node<T> *> nodesToSearch;
-
-    while (node) {
-        if (node->is_leaf) {
-            for (const auto &child : node->children) {
+template <typename T> std::vector<std::reference_wrapper<T>> RBushBase<T>::all() const {
+    std::vector<std::reference_wrapper<T>> result;
+    std::vector<std::reference_wrapper<const Node<T>>> nodes_to_search;
+    nodes_to_search.push_back(std::cref(*_root));
+    while (!nodes_to_search.empty()) {
+        const Node<T> &node = nodes_to_search.back().get();
+        nodes_to_search.pop_back();
+        if (node.is_leaf) {
+            for (const auto &child : node.children) {
                 result.push_back(*child->data);
             }
         } else {
-            for (const auto &child : node->children) {
-                nodesToSearch.push_back(child.get());
+            for (const auto &child : node.children) {
+                nodes_to_search.push_back(std::cref(*child));
             }
         }
-
-        if (!nodesToSearch.empty()) {
-            node = nodesToSearch.back();
-            nodesToSearch.pop_back();
-        } else {
-            node = nullptr;
-        }
     }
+    return result;
 }
 
 // RBush implementation

@@ -32,7 +32,7 @@ jobs:
         sudo rm /usr/bin/clang-format
         sudo ln -s /usr/bin/clang-format-18 /usr/bin/clang-format
         curl -sSL https://install.python-poetry.org | python3 -
-        poetry install --with dev
+        poetry install -v --with dev
 
     - name: Run linters
       run: |
