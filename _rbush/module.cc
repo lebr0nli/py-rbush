@@ -1,3 +1,4 @@
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -16,6 +17,7 @@ PYBIND11_MODULE(_rbush, m) {
         .def_readwrite("max_x", &rbush::BBox::max_x)
         .def_readwrite("max_y", &rbush::BBox::max_y)
         .def("area", &rbush::BBox::area)
+        .def("contains", &rbush::BBox::contains)
         .def("margin", &rbush::BBox::margin)
         .def("enlarged_area", &rbush::BBox::enlarged_area)
         .def("intersection_area", &rbush::BBox::intersection_area)
@@ -25,6 +27,8 @@ PYBIND11_MODULE(_rbush, m) {
         .def(py::init<int>(), py::arg("max_entries") = 9)
         .def("clear", &rbush::RBushBase<py::object>::clear)
         .def("insert", &rbush::RBushBase<py::object>::insert, py::arg("item"))
+        .def("remove", &rbush::RBushBase<py::object>::remove, py::arg("item"),
+             py::arg("equals") = nullptr)
         .def("all", &rbush::RBushBase<py::object>::all)
         .def("to_bbox", &rbush::RBushBase<py::object>::to_bbox, py::arg("item"));
 
@@ -32,6 +36,8 @@ PYBIND11_MODULE(_rbush, m) {
         .def(py::init<int>(), py::arg("max_entries") = 9)
         .def("clear", &rbush::RBushBase<py::dict>::clear)
         .def("insert", &rbush::RBushBase<py::dict>::insert, py::arg("item"))
+        .def("remove", &rbush::RBushBase<py::dict>::remove, py::arg("item"),
+             py::arg("equals") = nullptr)
         .def("all", &rbush::RBushBase<py::dict>::all)
         .def("to_bbox", &rbush::RBush::to_bbox, py::arg("item"));
 }

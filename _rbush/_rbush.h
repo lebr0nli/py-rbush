@@ -28,6 +28,7 @@ struct BBox {
         : min_x(min_x), min_y(min_y), max_x(max_x), max_y(max_y) {}
 
     double area() const;
+    bool contains(const BBox &other) const;
     double margin() const;
     double enlarged_area(const BBox &other) const;
     double intersection_area(const BBox &other) const;
@@ -65,6 +66,7 @@ public:
 
     void clear();
     void insert(const T &item);
+    void remove(const T &item, const std::function<bool(const T &, const T &)> &equals = nullptr);
     std::vector<std::reference_wrapper<T>> all() const;
 
     virtual BBox to_bbox(const T &item) const = 0;
@@ -84,6 +86,7 @@ private:
     int _choose_split_index(Node<T> &node, int m, int M);
     void _choose_split_axis(Node<T> &node, int m, int M);
     double _all_dist_margin(Node<T> &node, int m, int M, bool compare_min_x);
+    void _condense(std::vector<std::reference_wrapper<Node<T>>> &path);
 };
 
 // Default implementation that takes a Python dictionary as input
