@@ -38,3 +38,11 @@ for item in data:
 end_time = time.time()
 
 print(f"Insert {N} items one by one: {end_time - start_time:.2f} seconds")
+
+# Benchmark: Remove 1000 items one by one
+start_time = time.time()
+for i in range(1000):
+    tree.remove(data[i])
+end_time = time.time()
+
+print(f"Remove 1000 items one by one: {end_time - start_time:.2f} seconds")

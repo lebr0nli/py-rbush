@@ -7,6 +7,11 @@ namespace rbush {
 
 double BBox::area() const { return (max_x - min_x) * (max_y - min_y); }
 
+bool BBox::contains(const BBox &other) const {
+    return min_x <= other.min_x && other.max_x <= max_x && min_y <= other.min_y &&
+           other.max_y <= max_y;
+}
+
 double BBox::margin() const { return (max_x - min_x) + (max_y - min_y); }
 
 double BBox::enlarged_area(const BBox &other) const {
@@ -238,6 +243,76 @@ double RBushBase<T>::_all_dist_margin(Node<T> &node, int m, int M, bool compare_
     }
 
     return margin_sum;
+}
+
+template <typename T>
+void RBushBase<T>::remove(const T &item, const std::function<bool(const T &, const T &)> &equals) {
+    BBox bbox = to_bbox(item);
+    std::vector<std::reference_wrapper<Node<T>>> path;
+    std::vector<size_t> children_indexes;
+    std::reference_wrapper<Node<T>> current_node = std::ref(*_root);
+    size_t children_index = 0;
+    bool going_up = false;
+
+    // depth-first iterative tree traversal
+    while (true) {
+        if (current_node.get().is_leaf) { // search for item
+            auto it = std::find_if(
+                current_node.get().children.begin(), current_node.get().children.end(),
+                [&](const std::unique_ptr<Node<T>> &child) {
+                    return equals ? equals(*child->data, item) : (*child->data).is(item);
+                });
+            if (it != current_node.get().children.end()) {
+                current_node.get().children.erase(it);
+                path.push_back(current_node);
+                _condense(path);
+                return;
+            }
+        }
+
+        if (!going_up && !current_node.get().is_leaf &&
+            current_node.get().contains(bbox)) { // go down
+            path.push_back(current_node);
+            children_indexes.push_back(children_index);
+            children_index = 0;
+            current_node = *current_node.get().children[0];
+        } else if (!path.empty() &&
+                   children_index + 1 < path.back().get().children.size()) { // go right
+            going_up = false; // can go down when visiting a new node
+            current_node = *path.back().get().children[++children_index];
+        } else if (!path.empty()) { // go up
+            current_node = path.back();
+            children_index = children_indexes.back();
+            path.pop_back();
+            children_indexes.pop_back();
+            going_up = true; // so it won't go down again when we back to parent
+        } else {
+            // if we can't go down, up or right, then we're done
+            return;
+        }
+    }
+}
+
+template <typename T>
+void RBushBase<T>::_condense(std::vector<std::reference_wrapper<Node<T>>> &path) {
+    for (int i = path.size() - 1; i >= 0; --i) {
+        Node<T> &node = path[i].get();
+        if (node.children.empty()) {
+            if (i > 0) {
+                Node<T> &parent = path[i - 1].get();
+                auto it = std::find_if(
+                    parent.children.begin(), parent.children.end(),
+                    [&](const std::unique_ptr<Node<T>> &child) { return child.get() == &node; });
+                if (it != parent.children.end()) {
+                    parent.children.erase(it);
+                }
+            } else {
+                clear();
+            }
+        } else {
+            node.calc_bbox();
+        }
+    }
 }
 
 template <typename T> std::vector<std::reference_wrapper<T>> RBushBase<T>::all() const {
