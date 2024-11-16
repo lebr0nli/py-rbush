@@ -4,8 +4,9 @@ import rbush
 def test_insert():
     tree = rbush.RBush()
     items = []
+    n = 10000
     # TODO: Maybe a more precise way to check all edge cases
-    for i in range(10000):
+    for i in range(n):
         items.append(
             {
                 "min_x": i,
@@ -18,7 +19,7 @@ def test_insert():
     all_items = tree.all()
 
     # the size and items should be the same
-    assert len(all_items) == 10000
+    assert len(all_items) == n
     assert all(item in all_items for item in items)
 
     # add one item into the tree
