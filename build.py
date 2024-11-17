@@ -7,7 +7,7 @@ def build(setup_kwargs: dict):
             "_rbush",
             sources=["_rbush/module.cc", "_rbush/_rbush.cc"],
             depends=["_rbush/_rbush.h"],
-            extra_compile_args=["-O3"],
+            extra_compile_args=["-O3", "-Wall", "-Wextra", "-Werror"],
             language="c++",
             cxx_std=17,
         ),
