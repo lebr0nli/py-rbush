@@ -28,6 +28,11 @@ double BBox::intersection_area(const BBox &other) const {
     return std::max(0.0, max_min_x - min_max_x) * std::max(0.0, max_min_y - min_max_y);
 }
 
+bool BBox::intersects(const BBox &other) const {
+    return other.min_x <= max_x && other.min_y <= max_y && other.max_x >= min_x &&
+           other.max_y >= min_y;
+}
+
 void BBox::extend(const BBox &other) {
     min_x = std::min(min_x, other.min_x);
     min_y = std::min(min_y, other.min_y);
@@ -315,24 +320,77 @@ void RBushBase<T>::_condense(std::vector<std::reference_wrapper<Node<T>>> &path)
     }
 }
 
-template <typename T> std::vector<std::reference_wrapper<T>> RBushBase<T>::all() const {
+template <typename T>
+std::vector<std::reference_wrapper<T>> RBushBase<T>::search(const BBox &bbox) const {
     std::vector<std::reference_wrapper<T>> result;
+    if (!bbox.intersects(*_root))
+        return result;
+
     std::vector<std::reference_wrapper<const Node<T>>> nodes_to_search;
     nodes_to_search.push_back(std::cref(*_root));
     while (!nodes_to_search.empty()) {
         const Node<T> &node = nodes_to_search.back().get();
         nodes_to_search.pop_back();
+        for (const auto &child : node.children) {
+            if (bbox.intersects(*child)) {
+                if (node.is_leaf) {
+                    result.push_back(*child->data);
+                } else if (bbox.contains(*child)) {
+                    _all(*child, result);
+                } else {
+                    nodes_to_search.push_back(std::cref(*child));
+                }
+            }
+        }
+    }
+    return result;
+}
+
+template <typename T> bool RBushBase<T>::collides(const BBox &bbox) const {
+    std::vector<std::reference_wrapper<const Node<T>>> nodes_to_search;
+    nodes_to_search.push_back(std::cref(*_root));
+    while (!nodes_to_search.empty()) {
+        const Node<T> &node = nodes_to_search.back().get();
+        nodes_to_search.pop_back();
+        for (const auto &child : node.children) {
+            if (bbox.intersects(*child)) {
+                if (node.is_leaf || bbox.contains(*child)) {
+                    return true;
+                } else {
+                    nodes_to_search.push_back(std::cref(*child));
+                }
+            }
+        }
+    }
+    return false;
+}
+
+template <typename T> std::vector<std::reference_wrapper<T>> RBushBase<T>::all() const {
+    std::vector<std::reference_wrapper<T>> result;
+    _all(*_root, result);
+    return result;
+}
+
+template <typename T>
+void RBushBase<T>::_all(std::reference_wrapper<Node<T>> start_node,
+                        std::vector<std::reference_wrapper<T>> &result) const {
+    std::vector<std::reference_wrapper<const Node<T>>> nodes_to_search;
+    nodes_to_search.push_back(start_node);
+    while (!nodes_to_search.empty()) {
+        const Node<T> &node = nodes_to_search.back().get();
+        nodes_to_search.pop_back();
         if (node.is_leaf) {
+            result.reserve(result.size() + node.children.size());
             for (const auto &child : node.children) {
                 result.push_back(*child->data);
             }
         } else {
+            nodes_to_search.reserve(nodes_to_search.size() + node.children.size());
             for (const auto &child : node.children) {
                 nodes_to_search.push_back(std::cref(*child));
             }
         }
     }
-    return result;
 }
 
 // RBush implementation

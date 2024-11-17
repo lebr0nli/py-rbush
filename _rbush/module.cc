@@ -29,6 +29,8 @@ PYBIND11_MODULE(_rbush, m) {
         .def("insert", &rbush::RBushBase<py::object>::insert, py::arg("item"))
         .def("remove", &rbush::RBushBase<py::object>::remove, py::arg("item"),
              py::arg("equals") = nullptr)
+        .def("search", &rbush::RBushBase<py::object>::search, py::arg("bbox"))
+        .def("collides", &rbush::RBushBase<py::object>::collides, py::arg("bbox"))
         .def("all", &rbush::RBushBase<py::object>::all)
         .def("to_bbox", &rbush::RBushBase<py::object>::to_bbox, py::arg("item"));
 
@@ -38,6 +40,8 @@ PYBIND11_MODULE(_rbush, m) {
         .def("insert", &rbush::RBushBase<py::dict>::insert, py::arg("item"))
         .def("remove", &rbush::RBushBase<py::dict>::remove, py::arg("item"),
              py::arg("equals") = nullptr)
+        .def("search", &rbush::RBushBase<py::dict>::search, py::arg("bbox"))
+        .def("collides", &rbush::RBushBase<py::dict>::collides, py::arg("bbox"))
         .def("all", &rbush::RBushBase<py::dict>::all)
         .def("to_bbox", &rbush::RBush::to_bbox, py::arg("item"));
 }

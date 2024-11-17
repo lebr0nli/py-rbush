@@ -32,6 +32,7 @@ struct BBox {
     double margin() const;
     double enlarged_area(const BBox &other) const;
     double intersection_area(const BBox &other) const;
+    bool intersects(const BBox &other) const;
     void extend(const BBox &other);
 
     static bool compare_min_x(const BBox &a, const BBox &b) { return a.min_x < b.min_x; }
@@ -67,6 +68,8 @@ public:
     void clear();
     void insert(const T &item);
     void remove(const T &item, const std::function<bool(const T &, const T &)> &equals = nullptr);
+    std::vector<std::reference_wrapper<T>> search(const BBox &bbox) const;
+    bool collides(const BBox &bbox) const;
     std::vector<std::reference_wrapper<T>> all() const;
 
     virtual BBox to_bbox(const T &item) const = 0;
@@ -87,6 +90,8 @@ private:
     void _choose_split_axis(Node<T> &node, int m, int M);
     double _all_dist_margin(Node<T> &node, int m, int M, bool compare_min_x);
     void _condense(std::vector<std::reference_wrapper<Node<T>>> &path);
+    void _all(std::reference_wrapper<Node<T>>,
+              std::vector<std::reference_wrapper<T>> &result) const;
 };
 
 // Default implementation that takes a Python dictionary as input
