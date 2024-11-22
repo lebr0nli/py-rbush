@@ -67,6 +67,7 @@ public:
 
     void clear();
     void insert(const T &item);
+    void load(std::vector<T> &items);
     void remove(const T &item, const std::function<bool(const T &, const T &)> &equals = nullptr);
     std::vector<std::reference_wrapper<T>> search(const BBox &bbox) const;
     bool collides(const BBox &bbox) const;
@@ -92,6 +93,13 @@ private:
     void _condense(std::vector<std::reference_wrapper<Node<T>>> &path);
     void _all(std::reference_wrapper<Node<T>>,
               std::vector<std::reference_wrapper<T>> &result) const;
+    std::unique_ptr<Node<T>> _build(std::vector<std::unique_ptr<Node<T>>> &nodes, int left,
+                                    int right, int height);
+    void _multi_select(std::vector<std::unique_ptr<Node<T>>> &nodes, int left, int right, int n,
+                       bool compare_min_x);
+    void _quick_select(std::vector<std::unique_ptr<Node<T>>> &nodes, int k, int left, int right,
+                       bool compare_min_x) const;
+    double _compare_node_min(const BBox &a, const BBox &b, bool compare_min_x) const;
 };
 
 // Default implementation that takes a Python dictionary as input
