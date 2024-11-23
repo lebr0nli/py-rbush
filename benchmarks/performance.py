@@ -35,6 +35,7 @@ def to_bbox(item) -> BBox:
 
 # Generate data for insertion
 data = gen_data(N, 1)
+data2 = gen_data(N, 1)
 bbox_100 = list(map(to_bbox, gen_data(1000, 100 * math.sqrt(0.1))))
 bbox_10 = list(map(to_bbox, gen_data(1000, 10)))
 bbox_1 = list(map(to_bbox, gen_data(1000, 1)))
@@ -82,3 +83,10 @@ for i in range(1000):
 end_time = time.time()
 
 print(f"Remove 1000 items one by one: {end_time - start_time:.2f} seconds")
+
+# Benchmark: Bulk-insert 1,000,000 more items
+start_time = time.time()
+tree.load(data2)
+end_time = time.time()
+
+print(f"Bulk-insert {N} items more: {end_time - start_time:.2f} seconds")
