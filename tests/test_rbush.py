@@ -238,3 +238,20 @@ def test_collides_when_not_found():
 
     result = tree.collides(rbush.BBox(200, 200, 210, 210))
     assert not result
+
+
+def test_load_when_empty():
+    tree = rbush.RBush()
+    tree.load(default_data)
+    all_items = tree.all()
+    assert len(all_items) == len(default_data)
+    assert all(item in all_items for item in default_data)
+
+
+def test_load_when_not_empty():
+    tree = rbush.RBush()
+    tree.insert(default_data[0])
+    tree.load(default_data[1:])
+    all_items = tree.all()
+    assert len(all_items) == len(default_data)
+    assert all(item in all_items for item in default_data)

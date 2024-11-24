@@ -27,6 +27,7 @@ PYBIND11_MODULE(_rbush, m) {
         .def(py::init<int>(), py::arg("max_entries") = 9)
         .def("clear", &rbush::RBushBase<py::object>::clear)
         .def("insert", &rbush::RBushBase<py::object>::insert, py::arg("item"))
+        .def("load", &rbush::RBushBase<py::object>::load, py::arg("items"))
         .def("remove", &rbush::RBushBase<py::object>::remove, py::arg("item"),
              py::arg("equals") = nullptr)
         .def("search", &rbush::RBushBase<py::object>::search, py::arg("bbox"))
@@ -38,6 +39,7 @@ PYBIND11_MODULE(_rbush, m) {
         .def(py::init<int>(), py::arg("max_entries") = 9)
         .def("clear", &rbush::RBushBase<py::dict>::clear)
         .def("insert", &rbush::RBushBase<py::dict>::insert, py::arg("item"))
+        .def("load", &rbush::RBushBase<py::dict>::load, py::arg("items"))
         .def("remove", &rbush::RBushBase<py::dict>::remove, py::arg("item"),
              py::arg("equals") = nullptr)
         .def("search", &rbush::RBushBase<py::dict>::search, py::arg("bbox"))

@@ -250,6 +250,179 @@ double RBushBase<T>::_all_dist_margin(Node<T> &node, int m, int M, bool compare_
     return margin_sum;
 }
 
+template <typename T> void RBushBase<T>::load(std::vector<T> &items) {
+    if (items.empty())
+        return;
+
+    if (items.size() < _min_entries) {
+        for (const auto &item : items) {
+            insert(item);
+        }
+        return;
+    }
+
+    std::vector<std::unique_ptr<Node<T>>> nodes;
+    nodes.reserve(items.size());
+    for (auto &item : items) {
+        auto node = std::make_unique<Node<T>>(item);
+        BBox bbox = to_bbox(item);
+        node->min_x = bbox.min_x;
+        node->min_y = bbox.min_y;
+        node->max_x = bbox.max_x;
+        node->max_y = bbox.max_y;
+        nodes.push_back(std::move(node));
+    }
+
+    // recursively build the tree with the given data from scratch using OMT algorithm
+    auto node = _build(nodes, 0, nodes.size() - 1, 0);
+
+    if (_root->children.empty()) {
+        // save as is if tree is empty
+        _root = std::move(node);
+    } else if (_root->height == node->height) {
+        // split root if trees have the same height
+        _split_root(*_root, *node);
+    } else {
+        if (_root->height < node->height) {
+            // swap trees if inserted one is bigger
+            std::swap(_root, node);
+        }
+
+        // insert the small tree into the large tree at appropriate level
+        int level = _root->height - node->height - 1;
+        _insert(std::move(node), level);
+    }
+}
+
+template <typename T>
+std::unique_ptr<Node<T>> RBushBase<T>::_build(std::vector<std::unique_ptr<Node<T>>> &nodes,
+                                              int left, int right, int height) {
+    const int N = right - left + 1;
+    int M = _max_entries;
+
+    if (N <= M) {
+        // reached leaf level; return leaf
+        auto node = std::make_unique<Node<T>>();
+        node->children.reserve(N);
+        for (int i = left; i <= right; ++i) {
+            node->children.push_back(std::move(nodes[i]));
+        }
+        node->calc_bbox();
+        return node;
+    }
+
+    if (!height) {
+        // target height of the bulk-loaded tree
+        height = std::ceil(std::log(N) / std::log(M));
+
+        // target number of root entries to maximize storage utilization
+        M = std::ceil(N / std::pow(M, height - 1));
+    }
+
+    auto node = std::make_unique<Node<T>>();
+    node->is_leaf = false;
+    node->height = height;
+
+    // split the items into M mostly square tiles
+    const int N2 = std::ceil(static_cast<double>(N) / M);
+    const int N1 = N2 * std::ceil(std::sqrt(M));
+
+    _multi_select(nodes, left, right, N1, true);
+
+    for (int i = left; i <= right; i += N1) {
+        const int right2 = std::min(i + N1 - 1, right);
+        _multi_select(nodes, i, right2, N2, false);
+
+        for (int j = i; j <= right2; j += N2) {
+            const int right3 = std::min(j + N2 - 1, right2);
+            // pack each entry recursively
+            node->children.push_back(_build(nodes, j, right3, height - 1));
+        }
+    }
+
+    node->calc_bbox();
+    return node;
+}
+
+template <typename T>
+void RBushBase<T>::_multi_select(std::vector<std::unique_ptr<Node<T>>> &nodes, int left, int right,
+                                 int n, bool compare_min_x) {
+    std::vector<int> stack = {left, right};
+
+    while (!stack.empty()) {
+        right = stack.back();
+        stack.pop_back();
+        left = stack.back();
+        stack.pop_back();
+
+        if (right - left <= n)
+            continue;
+
+        const int mid = left + std::ceil(static_cast<double>(right - left) / n / 2) * n;
+        _quick_select(nodes, mid, left, right, compare_min_x);
+
+        stack.push_back(left);
+        stack.push_back(mid);
+        stack.push_back(mid);
+        stack.push_back(right);
+    }
+}
+
+template <typename T>
+void RBushBase<T>::_quick_select(std::vector<std::unique_ptr<Node<T>>> &arr, int k, int left,
+                                 int right, bool compare_min_x) const {
+    while (right > left) {
+        if (right - left > 600) {
+            const double n = right - left + 1;
+            const double m = k - left + 1;
+            const double z = std::log(n);
+            const double s = 0.5 * std::exp(2 * z / 3);
+            const double sd = 0.5 * std::sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
+            const int new_left = std::max(left, static_cast<int>(std::floor(k - m * s / n + sd)));
+            const int new_right =
+                std::min(right, static_cast<int>(std::floor(k + (n - m) * s / n + sd)));
+            _quick_select(arr, k, new_left, new_right, compare_min_x);
+        }
+
+        const std::reference_wrapper<Node<T>> t = *arr[k];
+        int i = left;
+        int j = right;
+
+        std::swap(arr[left], arr[k]);
+        if (_compare_node_min(*arr[right], t, compare_min_x) > 0) {
+            std::swap(arr[left], arr[right]);
+        }
+
+        while (i < j) {
+            std::swap(arr[i], arr[j]);
+            ++i;
+            --j;
+            while (_compare_node_min(*arr[i], t, compare_min_x) < 0)
+                ++i;
+            while (_compare_node_min(*arr[j], t, compare_min_x) > 0) {
+                --j;
+            }
+        }
+
+        if (_compare_node_min(*arr[left], t, compare_min_x) == 0) {
+            std::swap(arr[left], arr[j]);
+        } else {
+            ++j;
+            std::swap(arr[j], arr[right]);
+        }
+
+        if (j <= k)
+            left = j + 1;
+        if (k <= j)
+            right = j - 1;
+    }
+}
+
+template <typename T>
+double RBushBase<T>::_compare_node_min(const BBox &a, const BBox &b, bool compare_min_x) const {
+    return compare_min_x ? a.min_x - b.min_x : a.min_y - b.min_y;
+}
+
 template <typename T>
 void RBushBase<T>::remove(const T &item, const std::function<bool(const T &, const T &)> &equals) {
     BBox bbox = to_bbox(item);
