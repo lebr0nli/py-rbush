@@ -201,7 +201,7 @@ template <typename T> void RBushBase<T>::_split_root(Node<T> &node, Node<T> &new
 template <typename T> int RBushBase<T>::_choose_split_index(Node<T> &node, int m, int M) {
     double min_overlap = std::numeric_limits<double>::infinity();
     double min_area = std::numeric_limits<double>::infinity();
-    int split_index = m;
+    int split_index = M - m;
 
     for (int i = m; i <= M - m; ++i) {
         BBox bbox1 = node.dist_bbox(0, i);
