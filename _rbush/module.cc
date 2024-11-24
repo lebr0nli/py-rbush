@@ -33,6 +33,8 @@ PYBIND11_MODULE(_rbush, m) {
         .def("search", &rbush::RBushBase<py::object>::search, py::arg("bbox"))
         .def("collides", &rbush::RBushBase<py::object>::collides, py::arg("bbox"))
         .def("all", &rbush::RBushBase<py::object>::all)
+        .def("serialize", &rbush::RBushBase<py::object>::serialize)
+        .def("deserialize", &rbush::RBushBase<py::object>::deserialize, py::arg("data"))
         .def("to_bbox", &rbush::RBushBase<py::object>::to_bbox, py::arg("item"));
 
     py::class_<rbush::RBush>(m, "RBush")
@@ -45,5 +47,7 @@ PYBIND11_MODULE(_rbush, m) {
         .def("search", &rbush::RBushBase<py::dict>::search, py::arg("bbox"))
         .def("collides", &rbush::RBushBase<py::dict>::collides, py::arg("bbox"))
         .def("all", &rbush::RBushBase<py::dict>::all)
+        .def("serialize", &rbush::RBushBase<py::dict>::serialize)
+        .def("deserialize", &rbush::RBushBase<py::dict>::deserialize, py::arg("data"))
         .def("to_bbox", &rbush::RBush::to_bbox, py::arg("item"));
 }

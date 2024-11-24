@@ -566,6 +566,69 @@ void RBushBase<T>::_all(std::reference_wrapper<Node<T>> start_node,
     }
 }
 
+template <typename T> py::dict RBushBase<T>::serialize() const {
+    py::dict result;
+    result["max_entries"] = _max_entries;
+    result["min_entries"] = _min_entries;
+    result["root"] = _serialize_node(*_root);
+    return result;
+}
+
+template <typename T> py::dict RBushBase<T>::_serialize_node(const Node<T> &node) const {
+    py::dict data;
+    data["bbox"] = py::dict(py::arg("min_x") = node.min_x, py::arg("min_y") = node.min_y,
+                            py::arg("max_x") = node.max_x, py::arg("max_y") = node.max_y);
+    data["height"] = node.height;
+    data["is_leaf"] = node.is_leaf;
+
+    py::list children;
+    for (const auto &child : node.children) {
+        if (node.is_leaf) {
+            children.append(*child->data);
+        } else {
+            children.append(_serialize_node(*child));
+        }
+    }
+    data["children"] = children;
+    return data;
+}
+
+template <typename T> void RBushBase<T>::deserialize(const py::dict &data) {
+    _max_entries = data["max_entries"].cast<size_t>();
+    _min_entries = data["min_entries"].cast<size_t>();
+    _root = _deserialize_node(data["root"]);
+}
+
+template <typename T>
+std::unique_ptr<Node<T>> RBushBase<T>::_deserialize_node(const py::dict &data) {
+    auto node = std::make_unique<Node<T>>();
+
+    py::dict bbox = data["bbox"];
+    node->min_x = bbox["min_x"].cast<double>();
+    node->min_y = bbox["min_y"].cast<double>();
+    node->max_x = bbox["max_x"].cast<double>();
+    node->max_y = bbox["max_y"].cast<double>();
+
+    node->height = data["height"].cast<int>();
+    node->is_leaf = data["is_leaf"].cast<bool>();
+
+    py::list children = data["children"];
+    for (const auto &child : children) {
+        if (node->is_leaf) {
+            auto leaf_node = std::make_unique<Node<T>>(child.cast<T>());
+            BBox bbox = to_bbox(child.cast<T>());
+            leaf_node->min_x = bbox.min_x;
+            leaf_node->min_y = bbox.min_y;
+            leaf_node->max_x = bbox.max_x;
+            leaf_node->max_y = bbox.max_y;
+            node->children.push_back(std::move(leaf_node));
+        } else {
+            node->children.push_back(_deserialize_node(child.cast<py::dict>()));
+        }
+    }
+    return node;
+}
+
 // RBush implementation
 
 BBox RBush::to_bbox(const py::dict &item) const {
