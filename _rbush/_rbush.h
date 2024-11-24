@@ -72,6 +72,8 @@ public:
     std::vector<std::reference_wrapper<T>> search(const BBox &bbox) const;
     bool collides(const BBox &bbox) const;
     std::vector<std::reference_wrapper<T>> all() const;
+    py::dict serialize() const;
+    void deserialize(const py::dict &data);
 
     virtual BBox to_bbox(const T &item) const = 0;
 
@@ -100,6 +102,8 @@ private:
     void _quick_select(std::vector<std::unique_ptr<Node<T>>> &nodes, int k, int left, int right,
                        bool compare_min_x) const;
     double _compare_node_min(const BBox &a, const BBox &b, bool compare_min_x) const;
+    py::dict _serialize_node(const Node<T> &node) const;
+    std::unique_ptr<Node<T>> _deserialize_node(const py::dict &data);
 };
 
 // Default implementation that takes a Python dictionary as input
