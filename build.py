@@ -1,4 +1,11 @@
-from pybind11.setup_helpers import Pybind11Extension
+import os
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "pybind11"))
+
+from pybind11.setup_helpers import Pybind11Extension  # noqa: E402
+
+del sys.path[-1]
 
 
 def build(setup_kwargs: dict):
