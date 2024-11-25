@@ -44,7 +44,7 @@ void BBox::extend(const BBox &other) {
 
 template <typename T> BBox Node<T>::dist_bbox(int start, int end) const {
     BBox bbox;
-    for (int i = start; i < end; i++) {
+    for (int i = start; i < end; ++i) {
         bbox.extend(*children[i]);
     }
     return bbox;
@@ -128,8 +128,8 @@ Node<T> &RBushBase<T>::_choose_subtree(const BBox &bbox, Node<T> &node, int leve
         if (target_node.get().is_leaf || static_cast<int>(path.size()) - 1 == level)
             break;
 
-        double min_area = std::numeric_limits<double>::max();
-        double min_enlargement = std::numeric_limits<double>::max();
+        double min_area = std::numeric_limits<double>::infinity();
+        double min_enlargement = std::numeric_limits<double>::infinity();
         bool found = false;
 
         for (const auto &child : target_node.get().children) {
@@ -199,19 +199,21 @@ template <typename T> void RBushBase<T>::_split_root(Node<T> &node, Node<T> &new
 }
 
 template <typename T> int RBushBase<T>::_choose_split_index(Node<T> &node, int m, int M) {
-    double min_overlap = std::numeric_limits<double>::max();
-    double min_area = std::numeric_limits<double>::max();
-    int split_index = m;
+    double min_overlap = std::numeric_limits<double>::infinity();
+    double min_area = std::numeric_limits<double>::infinity();
+    int split_index = M - m;
 
-    for (int i = m; i <= M - m; i++) {
+    for (int i = m; i <= M - m; ++i) {
         BBox bbox1 = node.dist_bbox(0, i);
         BBox bbox2 = node.dist_bbox(i, M);
 
         double overlap = bbox1.intersection_area(bbox2);
         double area = bbox1.area() + bbox2.area();
 
-        if (overlap < min_overlap || (overlap == min_overlap && area < min_area)) {
+        if (overlap < min_overlap) {
             min_overlap = overlap;
+            split_index = i;
+        } else if (overlap == min_overlap && area < min_area) {
             min_area = area;
             split_index = i;
         }
@@ -241,7 +243,7 @@ double RBushBase<T>::_all_dist_margin(Node<T> &node, int m, int M, bool compare_
     }
 
     double margin_sum = 0;
-    for (int i = 0; i < M - m + 1; i++) {
+    for (int i = 0; i < M - m + 1; ++i) {
         BBox bbox1 = node.dist_bbox(0, m + i);
         BBox bbox2 = node.dist_bbox(m + i, M);
         margin_sum += bbox1.margin() + bbox2.margin();
