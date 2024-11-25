@@ -210,8 +210,10 @@ template <typename T> int RBushBase<T>::_choose_split_index(Node<T> &node, int m
         double overlap = bbox1.intersection_area(bbox2);
         double area = bbox1.area() + bbox2.area();
 
-        if (overlap < min_overlap || (overlap == min_overlap && area < min_area)) {
+        if (overlap < min_overlap) {
             min_overlap = overlap;
+            split_index = i;
+        } else if (overlap == min_overlap && area < min_area) {
             min_area = area;
             split_index = i;
         }
