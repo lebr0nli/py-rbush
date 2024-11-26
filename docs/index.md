@@ -1,6 +1,6 @@
-# py-rbush
+# Introduction
 
-This is a Python port of the JavaScript library, [mourner/rbush](https://github.com/mourner/rbush). 
+This is a Python port of the JavaScript library, [mourner/rbush](https://github.com/mourner/rbush).
 
 RBush is a high-performance JavaScript library for 2D **spatial indexing** of points and rectangles.
 It's based on an optimized **R-tree** data structure with **bulk insertion** support.
@@ -18,14 +18,6 @@ It's most commonly used in maps and data visualizations.
 ```shell
 pip install git+https://github.com/lebr0nli/py-rbush.git
 ```
-
-## Usage guide
-
-Check out the [user guide](https://lebr0nli.github.io/py-rbush/user_guide/) for detailed usage instructions.
-
-## Developer guide
-
-Check out the [developer guide](https://lebr0nli.github.io/py-rbush/developer_guide/) for instructions on building, testing, and linting the project.
 
 ## Upstream
 
