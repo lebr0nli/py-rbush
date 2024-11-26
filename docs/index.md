@@ -1,6 +1,6 @@
 # Introduction
 
-This is a Python port of the original JavaScript library, [mourner/rbush](https://github.com/mourner/rbush). 
+This is a Python port of the JavaScript library, [mourner/rbush](https://github.com/mourner/rbush).
 
 RBush is a high-performance JavaScript library for 2D **spatial indexing** of points and rectangles.
 It's based on an optimized **R-tree** data structure with **bulk insertion** support.
@@ -18,3 +18,12 @@ It's most commonly used in maps and data visualizations.
 ```shell
 pip install git+https://github.com/lebr0nli/py-rbush.git
 ```
+
+## Upstream
+
+This library is a straight-up port of several JavaScript libraries written by Vladimir Agafonkin:
+
+- [RBush 4.0.1](https://github.com/mourner/rbush)
+- [QuickSelect 3.0.0](https://github.com/mourner/quickselect)
+
+All of these are published under MIT or ISC licenses.
