@@ -9,12 +9,16 @@ del sys.path[-1]
 
 
 def build(setup_kwargs: dict):
+    copmile_args = ["-O2", "-Wall", "-Wextra", "-Werror"]
+    if os.environ.get("RBUSH_DEBUG"):
+        copmile_args.extend(["-g", "-DRBUSH_DEBUG"])
+
     ext_modules = [
         Pybind11Extension(
             "_rbush",
             sources=["_rbush/module.cc", "_rbush/_rbush.cc"],
-            depends=["_rbush/_rbush.h"],
-            extra_compile_args=["-O3", "-Wall", "-Wextra", "-Werror"],
+            depends=["_rbush/_rbush.h", "_rbush/debug.h"],
+            extra_compile_args=copmile_args,
             language="c++",
             cxx_std=17,
         ),
