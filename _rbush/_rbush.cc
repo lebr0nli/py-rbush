@@ -1,4 +1,5 @@
 #include "_rbush.h"
+#include "debug.h"
 #include <cmath>
 
 namespace rbush {
@@ -82,6 +83,7 @@ template <typename T> void RBushBase<T>::clear() {
 }
 
 template <typename T> void RBushBase<T>::insert(const T &item) {
+    DEBUG_TIMER("insert");
     std::unique_ptr<Node<T>> item_node = std::make_unique<Node<T>>(item);
     BBox bbox = to_bbox(item);
     item_node->min_x = bbox.min_x;
@@ -253,6 +255,7 @@ double RBushBase<T>::_all_dist_margin(Node<T> &node, int m, int M, bool compare_
 }
 
 template <typename T> void RBushBase<T>::load(std::vector<T> &items) {
+    DEBUG_TIMER("load");
     if (items.empty())
         return;
 
@@ -427,6 +430,7 @@ double RBushBase<T>::_compare_node_min(const BBox &a, const BBox &b, bool compar
 
 template <typename T>
 void RBushBase<T>::remove(const T &item, const std::function<bool(const T &, const T &)> &equals) {
+    DEBUG_TIMER("remove");
     BBox bbox = to_bbox(item);
     std::vector<std::reference_wrapper<Node<T>>> path;
     std::vector<size_t> children_indexes;
@@ -497,6 +501,7 @@ void RBushBase<T>::_condense(std::vector<std::reference_wrapper<Node<T>>> &path)
 
 template <typename T>
 std::vector<std::reference_wrapper<T>> RBushBase<T>::search(const BBox &bbox) const {
+    DEBUG_TIMER("search");
     std::vector<std::reference_wrapper<T>> result;
     if (!bbox.intersects(*_root))
         return result;
@@ -522,6 +527,7 @@ std::vector<std::reference_wrapper<T>> RBushBase<T>::search(const BBox &bbox) co
 }
 
 template <typename T> bool RBushBase<T>::collides(const BBox &bbox) const {
+    DEBUG_TIMER("collides");
     std::vector<std::reference_wrapper<const Node<T>>> nodes_to_search;
     nodes_to_search.push_back(std::cref(*_root));
     while (!nodes_to_search.empty()) {
@@ -541,6 +547,7 @@ template <typename T> bool RBushBase<T>::collides(const BBox &bbox) const {
 }
 
 template <typename T> std::vector<std::reference_wrapper<T>> RBushBase<T>::all() const {
+    DEBUG_TIMER("all");
     std::vector<std::reference_wrapper<T>> result;
     _all(*_root, result);
     return result;
@@ -569,6 +576,7 @@ void RBushBase<T>::_all(std::reference_wrapper<Node<T>> start_node,
 }
 
 template <typename T> py::dict RBushBase<T>::serialize() const {
+    DEBUG_TIMER("serialize");
     py::dict result;
     result["max_entries"] = _max_entries;
     result["min_entries"] = _min_entries;
@@ -596,6 +604,7 @@ template <typename T> py::dict RBushBase<T>::_serialize_node(const Node<T> &node
 }
 
 template <typename T> void RBushBase<T>::deserialize(const py::dict &data) {
+    DEBUG_TIMER("deserialize");
     _max_entries = data["max_entries"].cast<size_t>();
     _min_entries = data["min_entries"].cast<size_t>();
     _root = _deserialize_node(data["root"]);
