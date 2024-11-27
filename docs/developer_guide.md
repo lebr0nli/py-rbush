@@ -4,7 +4,7 @@
 
 - python3 (>=3.8)
 - [poetry](https://python-poetry.org)
-- g++ or clang
+- g++ or clang++
 - clang-format
 
 ## Installing Dependencies and Building
@@ -58,6 +58,9 @@ make fix
 ```
 make bench
 ```
+
+!!! note
+    You can build rbush with `RBUSH_DEBUG=1 make` to let the benchmarking script can show the time taken by the C++ implementation.
 
 ## Serving Documentation
 

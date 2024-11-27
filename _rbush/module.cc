@@ -3,6 +3,7 @@
 #include <pybind11/stl.h>
 
 #include "_rbush.h"
+#include "debug.h"
 
 namespace py = pybind11;
 
@@ -50,4 +51,19 @@ PYBIND11_MODULE(_rbush, m) {
         .def("serialize", &rbush::RBushBase<py::dict>::serialize)
         .def("deserialize", &rbush::RBushBase<py::dict>::deserialize, py::arg("data"))
         .def("to_bbox", &rbush::RBush::to_bbox, py::arg("item"));
+
+#ifdef RBUSH_DEBUG
+    m.def(
+        "get_avg_time",
+        [](const std::string &method_name) {
+            return debug::RuntimeTracker::get_instance().get_avg_time(method_name);
+        },
+        py::arg("method_name"));
+    m.def(
+        "get_total_time",
+        [](const std::string &method_name) {
+            return debug::RuntimeTracker::get_instance().get_total_time(method_name);
+        },
+        py::arg("method_name"));
+#endif
 }
