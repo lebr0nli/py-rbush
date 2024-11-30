@@ -245,14 +245,21 @@ double RBushBase<T>::_all_dist_margin(Node<T> &node, int m, int M, bool compare_
                   [](const auto &a, const auto &b) { return BBox::compare_min_y(*a, *b); });
     }
 
-    double margin_sum = 0;
-    for (int i = 0; i < M - m + 1; ++i) {
-        BBox bbox1 = node.dist_bbox(0, m + i);
-        BBox bbox2 = node.dist_bbox(m + i, M);
-        margin_sum += bbox1.margin() + bbox2.margin();
+    BBox left_bbox = node.dist_bbox(0, m);
+    BBox right_bbox = node.dist_bbox(M - m, M);
+    double margin = left_bbox.margin() + right_bbox.margin();
+
+    for (int i = m; i < M - m; ++i) {
+        left_bbox.extend(*node.children[i]);
+        margin += left_bbox.margin();
     }
 
-    return margin_sum;
+    for (int i = M - m - 1; i >= m; --i) {
+        right_bbox.extend(*node.children[i]);
+        margin += right_bbox.margin();
+    }
+
+    return margin;
 }
 
 template <typename T> void RBushBase<T>::load(std::vector<T> &items) {
