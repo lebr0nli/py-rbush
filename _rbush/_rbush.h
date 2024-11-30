@@ -34,9 +34,6 @@ struct BBox {
     double intersection_area(const BBox &other) const;
     bool intersects(const BBox &other) const;
     void extend(const BBox &other);
-
-    static bool compare_min_x(const BBox &a, const BBox &b) { return a.min_x < b.min_x; }
-    static bool compare_min_y(const BBox &a, const BBox &b) { return a.min_y < b.min_y; }
 };
 
 // Node structure for R-tree

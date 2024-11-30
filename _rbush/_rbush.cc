@@ -234,7 +234,7 @@ template <typename T> void RBushBase<T>::_choose_split_axis(Node<T> &node, int m
 
     if (x_margin < y_margin) {
         std::sort(node.children.begin(), node.children.end(),
-                  [](const auto &a, const auto &b) { return BBox::compare_min_x(*a, *b); });
+                  [](const auto &a, const auto &b) { return a->min_x < b->min_x; });
     }
 }
 
@@ -242,10 +242,10 @@ template <typename T>
 double RBushBase<T>::_all_dist_margin(Node<T> &node, int m, int M, bool compare_min_x) {
     if (compare_min_x) {
         std::sort(node.children.begin(), node.children.end(),
-                  [](const auto &a, const auto &b) { return BBox::compare_min_x(*a, *b); });
+                  [](const auto &a, const auto &b) { return a->min_x < b->min_x; });
     } else {
         std::sort(node.children.begin(), node.children.end(),
-                  [](const auto &a, const auto &b) { return BBox::compare_min_y(*a, *b); });
+                  [](const auto &a, const auto &b) { return a->min_y < b->min_y; });
     }
 
     BBox left_bbox = node.dist_bbox(0, m);
