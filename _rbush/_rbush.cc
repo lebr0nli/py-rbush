@@ -215,6 +215,7 @@ template <typename T> int RBushBase<T>::_choose_split_index(Node<T> &node, int m
 
         if (overlap < min_overlap) {
             min_overlap = overlap;
+            min_area = std::min(area, min_area);
             split_index = i;
         } else if (overlap == min_overlap && area < min_area) {
             min_area = area;
