@@ -70,7 +70,8 @@ template struct Node<py::object>;
 
 template <typename T>
 RBushBase<T>::RBushBase(size_t max_entries)
-    : _max_entries(max_entries), _min_entries(std::max<size_t>(2, max_entries / 2)) {
+    : _max_entries(std::max<size_t>(4, max_entries)),
+      _min_entries(std::max<size_t>(2, std::ceil(_max_entries * 0.4))) {
     _root = std::make_unique<Node<T>>();
     _root->height = 1;
     _root->is_leaf = true;
