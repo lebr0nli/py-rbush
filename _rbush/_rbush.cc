@@ -139,14 +139,16 @@ Node<T> &RBushBase<T>::_choose_subtree(const BBox &bbox, Node<T> &node, int leve
             double area = child->area();
             double enlargement = child->enlarged_area(bbox) - area;
 
-            if (enlargement < min_enlargement ||
-                (enlargement == min_enlargement && area < min_area)) {
+            if (enlargement < min_enlargement) {
+                min_area = std::min(min_area, area);
+                min_enlargement = enlargement;
+                target_node = *child;
+                found = true;
+            } else if (enlargement == min_enlargement && area < min_area) {
+                min_area = area;
                 target_node = *child;
                 found = true;
             }
-
-            min_area = std::min(min_area, area);
-            min_enlargement = std::min(min_enlargement, enlargement);
         }
         if (!found)
             target_node = *target_node.get().children[0];
