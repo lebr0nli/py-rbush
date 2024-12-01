@@ -573,12 +573,10 @@ void RBushBase<T>::_all(std::reference_wrapper<Node<T>> start_node,
         const Node<T> &node = nodes_to_search.back().get();
         nodes_to_search.pop_back();
         if (node.is_leaf) {
-            result.reserve(result.size() + node.children.size());
             for (const auto &child : node.children) {
                 result.push_back(*child->data);
             }
         } else {
-            nodes_to_search.reserve(nodes_to_search.size() + node.children.size());
             for (const auto &child : node.children) {
                 nodes_to_search.push_back(std::cref(*child));
             }
