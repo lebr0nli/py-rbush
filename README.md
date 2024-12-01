@@ -19,6 +19,37 @@ It's most commonly used in maps and data visualizations.
 pip install git+https://github.com/lebr0nli/py-rbush.git
 ```
 
+## Performance
+
+We used the same way to benchmark the performance as the [original](https://github.com/mourner/rbush/blob/main/bench/perf.js) JavaScript RBush. Check [performance.py](<./benchmarks/performance.py>) for more details.
+
+The following tables are the results of the performance test with Python 3.10 on an 8-core M1 CPU.
+
+- Comparison with another Python port of RBush (but written in pure Python)
+
+Test                         | RBush  | [pure Python RBush](https://github.com/parietal-io/py-rbush) | Improvement
+---------------------------- | ------ | ------ | ----
+insert 1M items one by one   | 1.03s  | 51.67s | 50.2x
+1000 searches of 0.01% area  | 0.01s  | 2.90s  | 290.0x
+1000 searches of 1% area     | 0.13s  | 9.03s  | 69.5x
+1000 searches of 10% area    | 0.92s  | 42.02s | 45.7x
+remove 1000 items one by one | 0.006s | 1.42s  | 236.7x
+bulk-insert 1M items         | 0.44s  | 17.01s | 38.7x
+
+- Comparison with the original JavaScript RBush
+
+Test                         | RBush  | [JavaScript RBush](https://github.com/mourner/rbush) | Improvement
+---------------------------- | ------ | ------ | ----
+insert 1M items one by one   | 1.03s  | 1.13s  | 1.0x
+1000 searches of 0.01% area  | 0.01s  | 0.03s  | 3.0x
+1000 searches of 1% area     | 0.13s  | 0.30s  | 2.3x
+1000 searches of 10% area    | 0.92s  | 1.28s  | 1.4x
+remove 1000 items one by one | 0.005s | 0.009s | 1.8x
+bulk-insert 1M items         | 0.44s  | 1.06s  | 2.4x
+
+> [!NOTE]
+> Most of the runtime is spent on the Python side rather than the C++ side, so the performance improvement will be more significant when the number of items is large.
+
 ## Usage guide
 
 Check out the [user guide](https://lebr0nli.github.io/py-rbush/user_guide/) for detailed usage instructions.
