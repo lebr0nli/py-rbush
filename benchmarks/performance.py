@@ -28,16 +28,16 @@ def benchmark(description: str, cpp_lookup_method: str):
         def wrapper(*args, **kwargs):
             if DEBUG_ENABLED:
                 cpp_time_before = dbg.get_total_time(cpp_lookup_method)
-            start_time = time.time()
+            start_time = time.perf_counter()
             result = func(*args, **kwargs)
-            end_time = time.time()
+            end_time = time.perf_counter()
             elapsed_time = end_time - start_time
             if DEBUG_ENABLED:
-                print(f"{description} (total): {elapsed_time:.2f} seconds")
+                print(f"{description} (total): {elapsed_time:.4f} seconds")
                 cpp_time_after = dbg.get_total_time(cpp_lookup_method) - cpp_time_before
                 print(f"{description} (C++): {cpp_time_after:.2f} ms")
             else:
-                print(f"{description}: {elapsed_time:.2f} seconds")
+                print(f"{description}: {elapsed_time:.4f} seconds")
             print()
             return result
 
