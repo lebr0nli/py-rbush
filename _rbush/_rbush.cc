@@ -70,7 +70,8 @@ template struct Node<py::object>;
 
 template <typename T>
 RBushBase<T>::RBushBase(size_t max_entries)
-    : _max_entries(max_entries), _min_entries(std::max<size_t>(2, max_entries / 2)) {
+    : _max_entries(std::max<size_t>(4, max_entries)),
+      _min_entries(std::max<size_t>(2, std::ceil(_max_entries * 0.4))) {
     _root = std::make_unique<Node<T>>();
     _root->height = 1;
     _root->is_leaf = true;
@@ -103,7 +104,7 @@ template <typename T> void RBushBase<T>::_insert(std::unique_ptr<Node<T>> item_n
     const BBox &item_bbox = *item_node;
 
     // put the item into the node
-    insert_node.children.push_back(std::move(item_node));
+    insert_node.children.emplace_back(std::move(item_node));
     insert_node.extend(item_bbox);
 
     // split on node overflow; propagate upwards if necessary
@@ -125,7 +126,7 @@ Node<T> &RBushBase<T>::_choose_subtree(const BBox &bbox, Node<T> &node, int leve
                                        std::vector<std::reference_wrapper<Node<T>>> &path) {
     std::reference_wrapper<Node<T>> target_node = std::ref(node);
     while (true) {
-        path.push_back(target_node);
+        path.emplace_back(target_node);
 
         if (target_node.get().is_leaf || static_cast<int>(path.size()) - 1 == level)
             break;
@@ -138,14 +139,16 @@ Node<T> &RBushBase<T>::_choose_subtree(const BBox &bbox, Node<T> &node, int leve
             double area = child->area();
             double enlargement = child->enlarged_area(bbox) - area;
 
-            if (enlargement < min_enlargement ||
-                (enlargement == min_enlargement && area < min_area)) {
+            if (enlargement < min_enlargement) {
+                min_area = std::min(min_area, area);
+                min_enlargement = enlargement;
+                target_node = *child;
+                found = true;
+            } else if (enlargement == min_enlargement && area < min_area) {
+                min_area = area;
                 target_node = *child;
                 found = true;
             }
-
-            min_area = std::min(min_area, area);
-            min_enlargement = std::min(min_enlargement, enlargement);
         }
         if (!found)
             target_node = *target_node.get().children[0];
@@ -175,7 +178,7 @@ void RBushBase<T>::_split(std::vector<std::reference_wrapper<Node<T>>> &insert_p
     new_node->calc_bbox();
 
     if (level) {
-        insert_path[level - 1].get().children.push_back(std::move(new_node));
+        insert_path[level - 1].get().children.emplace_back(std::move(new_node));
     } else {
         _split_root(node, *new_node);
     }
@@ -194,8 +197,8 @@ template <typename T> void RBushBase<T>::_split_root(Node<T> &node, Node<T> &new
     std::unique_ptr<Node<T>> new_root = std::make_unique<Node<T>>();
     new_root->height = node.height + 1;
     new_root->is_leaf = false;
-    new_root->children.push_back(std::make_unique<Node<T>>(std::move(node)));
-    new_root->children.push_back(std::make_unique<Node<T>>(std::move(new_node)));
+    new_root->children.emplace_back(std::make_unique<Node<T>>(std::move(node)));
+    new_root->children.emplace_back(std::make_unique<Node<T>>(std::move(new_node)));
     new_root->calc_bbox();
     _root = std::move(new_root);
 }
@@ -214,6 +217,7 @@ template <typename T> int RBushBase<T>::_choose_split_index(Node<T> &node, int m
 
         if (overlap < min_overlap) {
             min_overlap = overlap;
+            min_area = std::min(area, min_area);
             split_index = i;
         } else if (overlap == min_overlap && area < min_area) {
             min_area = area;
@@ -230,7 +234,7 @@ template <typename T> void RBushBase<T>::_choose_split_axis(Node<T> &node, int m
 
     if (x_margin < y_margin) {
         std::sort(node.children.begin(), node.children.end(),
-                  [](const auto &a, const auto &b) { return BBox::compare_min_x(*a, *b); });
+                  [](const auto &a, const auto &b) { return a->min_x < b->min_x; });
     }
 }
 
@@ -238,20 +242,27 @@ template <typename T>
 double RBushBase<T>::_all_dist_margin(Node<T> &node, int m, int M, bool compare_min_x) {
     if (compare_min_x) {
         std::sort(node.children.begin(), node.children.end(),
-                  [](const auto &a, const auto &b) { return BBox::compare_min_x(*a, *b); });
+                  [](const auto &a, const auto &b) { return a->min_x < b->min_x; });
     } else {
         std::sort(node.children.begin(), node.children.end(),
-                  [](const auto &a, const auto &b) { return BBox::compare_min_y(*a, *b); });
+                  [](const auto &a, const auto &b) { return a->min_y < b->min_y; });
     }
 
-    double margin_sum = 0;
-    for (int i = 0; i < M - m + 1; ++i) {
-        BBox bbox1 = node.dist_bbox(0, m + i);
-        BBox bbox2 = node.dist_bbox(m + i, M);
-        margin_sum += bbox1.margin() + bbox2.margin();
+    BBox left_bbox = node.dist_bbox(0, m);
+    BBox right_bbox = node.dist_bbox(M - m, M);
+    double margin = left_bbox.margin() + right_bbox.margin();
+
+    for (int i = m; i < M - m; ++i) {
+        left_bbox.extend(*node.children[i]);
+        margin += left_bbox.margin();
     }
 
-    return margin_sum;
+    for (int i = M - m - 1; i >= m; --i) {
+        right_bbox.extend(*node.children[i]);
+        margin += right_bbox.margin();
+    }
+
+    return margin;
 }
 
 template <typename T> void RBushBase<T>::load(std::vector<T> &items) {
@@ -275,7 +286,7 @@ template <typename T> void RBushBase<T>::load(std::vector<T> &items) {
         node->min_y = bbox.min_y;
         node->max_x = bbox.max_x;
         node->max_y = bbox.max_y;
-        nodes.push_back(std::move(node));
+        nodes.emplace_back(std::move(node));
     }
 
     // recursively build the tree with the given data from scratch using OMT algorithm
@@ -310,7 +321,7 @@ std::unique_ptr<Node<T>> RBushBase<T>::_build(std::vector<std::unique_ptr<Node<T
         auto node = std::make_unique<Node<T>>();
         node->children.reserve(N);
         for (int i = left; i <= right; ++i) {
-            node->children.push_back(std::move(nodes[i]));
+            node->children.emplace_back(std::move(nodes[i]));
         }
         node->calc_bbox();
         return node;
@@ -341,7 +352,7 @@ std::unique_ptr<Node<T>> RBushBase<T>::_build(std::vector<std::unique_ptr<Node<T
         for (int j = i; j <= right2; j += N2) {
             const int right3 = std::min(j + N2 - 1, right2);
             // pack each entry recursively
-            node->children.push_back(_build(nodes, j, right3, height - 1));
+            node->children.emplace_back(_build(nodes, j, right3, height - 1));
         }
     }
 
@@ -366,10 +377,10 @@ void RBushBase<T>::_multi_select(std::vector<std::unique_ptr<Node<T>>> &nodes, i
         const int mid = left + std::ceil(static_cast<double>(right - left) / n / 2) * n;
         _quick_select(nodes, mid, left, right, compare_min_x);
 
-        stack.push_back(left);
-        stack.push_back(mid);
-        stack.push_back(mid);
-        stack.push_back(right);
+        stack.emplace_back(left);
+        stack.emplace_back(mid);
+        stack.emplace_back(mid);
+        stack.emplace_back(right);
     }
 }
 
@@ -448,7 +459,7 @@ void RBushBase<T>::remove(const T &item, const std::function<bool(const T &, con
                 });
             if (it != current_node.get().children.end()) {
                 current_node.get().children.erase(it);
-                path.push_back(current_node);
+                path.emplace_back(current_node);
                 _condense(path);
                 return;
             }
@@ -456,8 +467,8 @@ void RBushBase<T>::remove(const T &item, const std::function<bool(const T &, con
 
         if (!going_up && !current_node.get().is_leaf &&
             current_node.get().contains(bbox)) { // go down
-            path.push_back(current_node);
-            children_indexes.push_back(children_index);
+            path.emplace_back(current_node);
+            children_indexes.emplace_back(children_index);
             children_index = 0;
             current_node = *current_node.get().children[0];
         } else if (!path.empty() &&
@@ -507,18 +518,18 @@ std::vector<std::reference_wrapper<T>> RBushBase<T>::search(const BBox &bbox) co
         return result;
 
     std::vector<std::reference_wrapper<const Node<T>>> nodes_to_search;
-    nodes_to_search.push_back(std::cref(*_root));
+    nodes_to_search.emplace_back(std::cref(*_root));
     while (!nodes_to_search.empty()) {
         const Node<T> &node = nodes_to_search.back().get();
         nodes_to_search.pop_back();
         for (const auto &child : node.children) {
             if (bbox.intersects(*child)) {
                 if (node.is_leaf) {
-                    result.push_back(*child->data);
+                    result.emplace_back(*child->data);
                 } else if (bbox.contains(*child)) {
                     _all(*child, result);
                 } else {
-                    nodes_to_search.push_back(std::cref(*child));
+                    nodes_to_search.emplace_back(std::cref(*child));
                 }
             }
         }
@@ -529,7 +540,7 @@ std::vector<std::reference_wrapper<T>> RBushBase<T>::search(const BBox &bbox) co
 template <typename T> bool RBushBase<T>::collides(const BBox &bbox) const {
     DEBUG_TIMER("collides");
     std::vector<std::reference_wrapper<const Node<T>>> nodes_to_search;
-    nodes_to_search.push_back(std::cref(*_root));
+    nodes_to_search.emplace_back(std::cref(*_root));
     while (!nodes_to_search.empty()) {
         const Node<T> &node = nodes_to_search.back().get();
         nodes_to_search.pop_back();
@@ -538,7 +549,7 @@ template <typename T> bool RBushBase<T>::collides(const BBox &bbox) const {
                 if (node.is_leaf || bbox.contains(*child)) {
                     return true;
                 } else {
-                    nodes_to_search.push_back(std::cref(*child));
+                    nodes_to_search.emplace_back(std::cref(*child));
                 }
             }
         }
@@ -557,19 +568,17 @@ template <typename T>
 void RBushBase<T>::_all(std::reference_wrapper<Node<T>> start_node,
                         std::vector<std::reference_wrapper<T>> &result) const {
     std::vector<std::reference_wrapper<const Node<T>>> nodes_to_search;
-    nodes_to_search.push_back(start_node);
+    nodes_to_search.emplace_back(start_node);
     while (!nodes_to_search.empty()) {
         const Node<T> &node = nodes_to_search.back().get();
         nodes_to_search.pop_back();
         if (node.is_leaf) {
-            result.reserve(result.size() + node.children.size());
             for (const auto &child : node.children) {
-                result.push_back(*child->data);
+                result.emplace_back(*child->data);
             }
         } else {
-            nodes_to_search.reserve(nodes_to_search.size() + node.children.size());
             for (const auto &child : node.children) {
-                nodes_to_search.push_back(std::cref(*child));
+                nodes_to_search.emplace_back(std::cref(*child));
             }
         }
     }
@@ -632,9 +641,9 @@ std::unique_ptr<Node<T>> RBushBase<T>::_deserialize_node(const py::dict &data) {
             leaf_node->min_y = bbox.min_y;
             leaf_node->max_x = bbox.max_x;
             leaf_node->max_y = bbox.max_y;
-            node->children.push_back(std::move(leaf_node));
+            node->children.emplace_back(std::move(leaf_node));
         } else {
-            node->children.push_back(_deserialize_node(child.cast<py::dict>()));
+            node->children.emplace_back(_deserialize_node(child.cast<py::dict>()));
         }
     }
     return node;
