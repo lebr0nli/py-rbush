@@ -27,7 +27,7 @@ The following tables are the results of the performance test with Python 3.10 on
 
 - Comparison with another Python port of RBush (but written in pure Python)
 
-Test                         | RBush  | [pure Python RBush](https://github.com/parietal-io/py-rbush) | Improvement
+Test                         | py-rbush  | [pure Python py-rbush](https://github.com/parietal-io/py-rbush) | Improvement
 ---------------------------- | ------ | ------ | ----
 insert 1M items one by one   | 1.03s  | 51.67s | 50.2x
 1000 searches of 0.01% area  | 0.01s  | 2.90s  | 290.0x
@@ -38,7 +38,7 @@ bulk-insert 1M items         | 0.44s  | 17.01s | 38.7x
 
 - Comparison with the original JavaScript RBush
 
-Test                         | RBush  | [JavaScript RBush](https://github.com/mourner/rbush) | Improvement
+Test                         | py-rbush  | [RBush](https://github.com/mourner/rbush) | Improvement
 ---------------------------- | ------ | ------ | ----
 insert 1M items one by one   | 1.03s  | 1.13s  | 1.0x
 1000 searches of 0.01% area  | 0.01s  | 0.03s  | 3.0x
