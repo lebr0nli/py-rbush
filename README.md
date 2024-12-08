@@ -33,7 +33,7 @@ insert 1M items one by one   | 1.03s  | 51.67s | 50.2x
 1000 searches of 0.01% area  | 0.01s  | 2.90s  | 290.0x
 1000 searches of 1% area     | 0.13s  | 9.03s  | 69.5x
 1000 searches of 10% area    | 0.92s  | 42.02s | 45.7x
-remove 1000 items one by one | 0.006s | 1.42s  | 236.7x
+remove 1000 items one by one | 0.005s | 1.42s  | 284.0x
 bulk-insert 1M items         | 0.44s  | 17.01s | 38.7x
 
 - Comparison with the original JavaScript RBush
@@ -46,9 +46,6 @@ insert 1M items one by one   | 1.03s  | 1.13s  | 1.0x
 1000 searches of 10% area    | 0.92s  | 1.28s  | 1.4x
 remove 1000 items one by one | 0.005s | 0.009s | 1.8x
 bulk-insert 1M items         | 0.44s  | 1.06s  | 2.4x
-
-> [!NOTE]
-> Most of the runtime is spent on the Python side rather than the C++ side, so the performance improvement will be more significant when the number of items is large.
 
 ## Usage guide
 
