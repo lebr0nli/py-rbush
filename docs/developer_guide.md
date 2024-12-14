@@ -53,7 +53,7 @@ make lint
 make fix
 ```
 
-### Benchmarking
+## Benchmarking
 
 ```
 make bench
