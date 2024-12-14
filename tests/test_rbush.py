@@ -210,7 +210,7 @@ def test_load_handle_empty_data():
     assert tree.serialize() == rbush.RBush().serialize()
 
 
-def test_load_hande_max_entries_plus_two_empty_bboxes():
+def test_load_handle_max_entries_plus_two_empty_bboxes():
     tree = rbush.RBush(4)
     tree.load(EMPTY_DATA)
 
