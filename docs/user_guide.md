@@ -45,6 +45,7 @@ Specialized R-tree implementation using Python dictionaries.
 
 - `clear()`: Remove all items from the R-tree
 - `insert(item: Dict)`: Insert an item into the R-tree
+- `load(items: List[Dict])`: Bulk insert items into the R-tree (faster than inserting one by one if you have lots of items)
 - `remove(item: Dict, equals: Optional[Callable] = None)`: Remove an item
 - `search(bbox: BBox) -> List[Any]`: Search items within a bounding box
 - `collides(bbox: BBox) -> bool`: Check if bbox collides with any stored item
@@ -65,6 +66,7 @@ Generic R-tree spatial index implementation that you can override `to_bbox` meth
 
 - `clear()`: Remove all items from the R-tree
 - `insert(item: Any)`: Insert an item into the R-tree
+- `load(items: List[Any])`: Bulk insert items into the R-tree (faster than inserting one by one if you have lots of items)
 - `remove(item: Any, equals: Optional[Callable] = None)`: Remove an item
 - `search(bbox: BBox) -> List[Any]`: Search items within a bounding box
 - `collides(bbox: BBox) -> bool`: Check if bbox collides with any stored item
@@ -97,8 +99,7 @@ item1 = {"min_x": 0, "min_y": 0, "max_x": 10, "max_y": 10, "id": 1}
 item2 = {"min_x": 5, "min_y": 5, "max_x": 15, "max_y": 15, "id": 2}
 item3 = {"min_x": 10, "min_y": 10, "max_x": 20, "max_y": 20, "id": 3}
 tree.insert(item1)
-tree.insert(item2)
-tree.insert(item3)
+tree.load([item2, item3])
 
 # Search items
 results = tree.search(BBox(-math.inf, -math.inf, math.inf, math.inf))
